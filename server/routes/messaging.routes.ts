@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { messagingService } from '../services/messaging.service';
+import { emailService } from '../services/email.service';
+import { smsService } from '../services/sms.service';
 import { z } from 'zod';
 import { contacts } from '@shared/schema';
 import { db } from '../db';
@@ -220,6 +222,63 @@ router.post('/campaign', async (req: Request, res: Response) => {
       success: false, 
       message: 'Internal server error', 
       error: error.message 
+    });
+  }
+});
+
+/**
+ * Check email service status
+ * GET /api/messaging/email/status
+ */
+router.get('/email/status', async (_req: Request, res: Response) => {
+  try {
+    // In a production environment, we would do a real check
+    // Here we'll check if the AWS credentials are configured
+    const isConfigured = process.env.AWS_ACCESS_KEY_ID && 
+                         process.env.AWS_SECRET_ACCESS_KEY && 
+                         process.env.AWS_REGION;
+    
+    return res.json({ 
+      success: true, 
+      available: !!isConfigured,
+      message: isConfigured 
+        ? 'Email service is available' 
+        : 'Email service is not configured properly'
+    });
+  } catch (error: any) {
+    console.error('Error checking email service status:', error);
+    return res.status(500).json({ 
+      success: false, 
+      available: false,
+      message: error.message || 'An error occurred while checking email service status' 
+    });
+  }
+});
+
+/**
+ * Check SMS service status
+ * GET /api/messaging/sms/status
+ */
+router.get('/sms/status', async (_req: Request, res: Response) => {
+  try {
+    // In a production environment, we would do a real check
+    // Here we'll check if the Dialpad credentials are configured
+    const isConfigured = process.env.DIALPAD_API_KEY && 
+                         process.env.DIALPAD_API_URL;
+    
+    return res.json({ 
+      success: true, 
+      available: !!isConfigured,
+      message: isConfigured 
+        ? 'SMS service is available' 
+        : 'SMS service is not configured properly'
+    });
+  } catch (error: any) {
+    console.error('Error checking SMS service status:', error);
+    return res.status(500).json({ 
+      success: false, 
+      available: false,
+      message: error.message || 'An error occurred while checking SMS service status' 
     });
   }
 });

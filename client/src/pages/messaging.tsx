@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import ConversationList from "@/components/messaging/conversation-list";
 import MessageComposer from "@/components/messaging/message-composer";
-import { apiRequest } from "@/lib/queryClient";
 
 const Messaging = () => {
   const [activeTab, setActiveTab] = useState("emails");
@@ -134,8 +133,11 @@ const Messaging = () => {
     setSendingEmail(true);
     
     try {
-      const response = await apiRequest('/api/messaging/email', {
+      const response = await fetch('/api/messaging/email', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           to: emailRecipient,
           subject: emailSubject,
@@ -143,7 +145,9 @@ const Messaging = () => {
         }),
       });
       
-      if (response.success) {
+      const data = await response.json();
+      
+      if (data.success) {
         toast({
           title: "Email sent",
           description: "Your email has been sent successfully",
@@ -157,7 +161,7 @@ const Messaging = () => {
       } else {
         toast({
           title: "Failed to send email",
-          description: response.message || "An error occurred while sending the email",
+          description: data.message || "An error occurred while sending the email",
           variant: "destructive"
         });
         setSesStatus("offline");
@@ -191,15 +195,20 @@ const Messaging = () => {
     setSendingSms(true);
     
     try {
-      const response = await apiRequest('/api/messaging/sms', {
+      const response = await fetch('/api/messaging/sms', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           to: smsRecipient,
           message: smsMessage,
         }),
       });
       
-      if (response.success) {
+      const data = await response.json();
+      
+      if (data.success) {
         toast({
           title: "SMS sent",
           description: "Your SMS has been sent successfully",
@@ -212,7 +221,7 @@ const Messaging = () => {
       } else {
         toast({
           title: "Failed to send SMS",
-          description: response.message || "An error occurred while sending the SMS",
+          description: data.message || "An error occurred while sending the SMS",
           variant: "destructive"
         });
         setDialpadStatus("offline");
@@ -229,6 +238,32 @@ const Messaging = () => {
       setSendingSms(false);
     }
   };
+
+  // Check the status of messaging services when component mounts
+  useEffect(() => {
+    const checkServicesStatus = async () => {
+      try {
+        // Check SES (email) service status
+        const emailResponse = await fetch('/api/messaging/email/status', { 
+          method: 'GET' 
+        }).then(res => res.json());
+        
+        setSesStatus(emailResponse.available ? "online" : "offline");
+        
+        // Check Dialpad (SMS) service status
+        const smsResponse = await fetch('/api/messaging/sms/status', { 
+          method: 'GET' 
+        }).then(res => res.json());
+        
+        setDialpadStatus(smsResponse.available ? "online" : "offline");
+      } catch (error) {
+        console.error("Error checking service status:", error);
+        // Keep default "unknown" status in case of error
+      }
+    };
+    
+    checkServicesStatus();
+  }, []);
 
   const handleSendMessage = (message: string) => {
     // In a real app, this would send the message to the backend
@@ -438,17 +473,41 @@ const Messaging = () => {
                   <h3 className="text-lg font-medium mb-4">API Status</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex items-center space-x-3 p-3 border rounded-md">
-                      <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                      <div className={`w-4 h-4 rounded-full ${
+                        sesStatus === "online" 
+                          ? "bg-green-500" 
+                          : sesStatus === "offline" 
+                            ? "bg-red-500" 
+                            : "bg-yellow-400"
+                      }`}></div>
                       <div>
                         <p className="font-medium">AWS SES</p>
-                        <p className="text-sm text-neutral-500">Email delivery service</p>
+                        <p className="text-sm text-neutral-500">
+                          {sesStatus === "online" 
+                            ? "Email service is operational" 
+                            : sesStatus === "offline" 
+                              ? "Email service is down" 
+                              : "Email service status unknown"}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3 p-3 border rounded-md">
-                      <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                      <div className={`w-4 h-4 rounded-full ${
+                        dialpadStatus === "online" 
+                          ? "bg-green-500" 
+                          : dialpadStatus === "offline" 
+                            ? "bg-red-500" 
+                            : "bg-yellow-400"
+                      }`}></div>
                       <div>
                         <p className="font-medium">Dialpad API</p>
-                        <p className="text-sm text-neutral-500">SMS delivery service</p>
+                        <p className="text-sm text-neutral-500">
+                          {dialpadStatus === "online" 
+                            ? "SMS service is operational" 
+                            : dialpadStatus === "offline" 
+                              ? "SMS service is down" 
+                              : "SMS service status unknown"}
+                        </p>
                       </div>
                     </div>
                   </div>
