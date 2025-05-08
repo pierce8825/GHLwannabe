@@ -1,4 +1,6 @@
 import { pgTable, text, serial, integer, boolean, timestamp, varchar, jsonb } from "drizzle-orm/pg-core";
+import type { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -151,3 +153,61 @@ export type InsertActivity = z.infer<typeof insertActivitySchema>;
 
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
+
+// Define relations between tables
+export const usersRelations = relations(users, ({ many }) => ({
+  tasks: many(tasks, { relationName: "user_tasks" }),
+  activities: many(activities, { relationName: "user_activities" }),
+}));
+
+export const contactsRelations = relations(contacts, ({ many }) => ({
+  deals: many(deals, { relationName: "contact_deals" }),
+  tasks: many(tasks, { relationName: "contact_tasks" }),
+  activities: many(activities, { relationName: "contact_activities" }),
+}));
+
+export const dealsRelations = relations(deals, ({ one, many }) => ({
+  contact: one(contacts, {
+    fields: [deals.contactId],
+    references: [contacts.id],
+    relationName: "deal_contact",
+  }),
+  tasks: many(tasks, { relationName: "deal_tasks" }),
+  activities: many(activities, { relationName: "deal_activities" }),
+}));
+
+export const tasksRelations = relations(tasks, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [tasks.contactId],
+    references: [contacts.id],
+    relationName: "task_contact",
+  }),
+  deal: one(deals, {
+    fields: [tasks.dealId],
+    references: [deals.id],
+    relationName: "task_deal",
+  }),
+  assignedUser: one(users, {
+    fields: [tasks.assignedTo],
+    references: [users.id],
+    relationName: "user_tasks",
+  }),
+}));
+
+export const activitiesRelations = relations(activities, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [activities.contactId],
+    references: [contacts.id],
+    relationName: "contact_activities",
+  }),
+  deal: one(deals, {
+    fields: [activities.dealId],
+    references: [deals.id],
+    relationName: "deal_activities",
+  }),
+  createdByUser: one(users, {
+    fields: [activities.createdBy],
+    references: [users.id],
+    relationName: "user_activities",
+  }),
+}));
