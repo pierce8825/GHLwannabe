@@ -291,8 +291,9 @@ async function seedDatabase() {
   } catch (error) {
     console.error("Error seeding database:", error);
   } finally {
-    // Close the database connection
-    await db.pool.end();
+    // Close the database connection if needed
+    // Note: with Neon serverless, we don't need to close the connection
+    // as it will be automatically closed
   }
 }
 
