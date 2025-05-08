@@ -14,6 +14,7 @@ import Calendar from "@/pages/calendar";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 import MainLayout from "./components/layout/main-layout";
+import { SubaccountProvider } from "./components/layout/subaccount-switcher";
 
 function Router() {
   return (
@@ -39,8 +40,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <SubaccountProvider>
+          <Toaster />
+          <Router />
+        </SubaccountProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
