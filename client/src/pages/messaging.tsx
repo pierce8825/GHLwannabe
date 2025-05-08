@@ -1,17 +1,35 @@
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 import ConversationList from "@/components/messaging/conversation-list";
 import MessageComposer from "@/components/messaging/message-composer";
+import { apiRequest } from "@/lib/queryClient";
 
 const Messaging = () => {
   const [activeTab, setActiveTab] = useState("emails");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedConversation, setSelectedConversation] = useState<number | null>(1);
+  const { toast } = useToast();
+  
+  // SMS form state
+  const [smsRecipient, setSmsRecipient] = useState("");
+  const [smsMessage, setSmsMessage] = useState("");
+  const [sendingSms, setSendingSms] = useState(false);
+  
+  // Email form state
+  const [emailRecipient, setEmailRecipient] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
+  
+  // API status
+  const [sesStatus, setSesStatus] = useState<"online" | "offline" | "unknown">("unknown");
+  const [dialpadStatus, setDialpadStatus] = useState<"online" | "offline" | "unknown">("unknown");
   
   // Sample conversations data
   const conversations = [
@@ -99,6 +117,118 @@ const Messaging = () => {
   ];
 
   const selectedConvo = conversations.find(c => c.id === selectedConversation);
+
+  // Handle sending email
+  const handleSendEmail = async (e: FormEvent) => {
+    e.preventDefault();
+    
+    if (!emailRecipient || !emailSubject || !emailMessage) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all fields",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setSendingEmail(true);
+    
+    try {
+      const response = await apiRequest('/api/messaging/email', {
+        method: 'POST',
+        body: JSON.stringify({
+          to: emailRecipient,
+          subject: emailSubject,
+          html: emailMessage,
+        }),
+      });
+      
+      if (response.success) {
+        toast({
+          title: "Email sent",
+          description: "Your email has been sent successfully",
+        });
+        
+        // Reset form
+        setEmailRecipient("");
+        setEmailSubject("");
+        setEmailMessage("");
+        setSesStatus("online");
+      } else {
+        toast({
+          title: "Failed to send email",
+          description: response.message || "An error occurred while sending the email",
+          variant: "destructive"
+        });
+        setSesStatus("offline");
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+      setSesStatus("offline");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+  
+  // Handle sending SMS
+  const handleSendSMS = async (e: FormEvent) => {
+    e.preventDefault();
+    
+    if (!smsRecipient || !smsMessage) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all fields",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setSendingSms(true);
+    
+    try {
+      const response = await apiRequest('/api/messaging/sms', {
+        method: 'POST',
+        body: JSON.stringify({
+          to: smsRecipient,
+          message: smsMessage,
+        }),
+      });
+      
+      if (response.success) {
+        toast({
+          title: "SMS sent",
+          description: "Your SMS has been sent successfully",
+        });
+        
+        // Reset form
+        setSmsRecipient("");
+        setSmsMessage("");
+        setDialpadStatus("online");
+      } else {
+        toast({
+          title: "Failed to send SMS",
+          description: response.message || "An error occurred while sending the SMS",
+          variant: "destructive"
+        });
+        setDialpadStatus("offline");
+      }
+    } catch (error) {
+      console.error("Error sending SMS:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+      setDialpadStatus("offline");
+    } finally {
+      setSendingSms(false);
+    }
+  };
 
   const handleSendMessage = (message: string) => {
     // In a real app, this would send the message to the backend
@@ -228,18 +358,101 @@ const Messaging = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="sms" className="flex-1 overflow-hidden m-0">
-              <div className="text-center py-10">
-                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto">
-                  <i className="ri-message-2-line text-2xl text-gray-400"></i>
-                </div>
-                <h3 className="mt-4 font-medium">SMS Messaging</h3>
-                <p className="text-neutral-500 text-sm mt-1 max-w-md mx-auto">
-                  Send SMS messages to your contacts directly from the platform.
-                </p>
-                <Button className="mt-6">
-                  <i className="ri-settings-line mr-2"></i> Configure SMS
-                </Button>
+            <TabsContent value="sms" className="flex-1 overflow-auto m-0 p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <Card className="p-6">
+                  <h3 className="text-lg font-medium mb-4">Send SMS Message</h3>
+                  <form onSubmit={handleSendSMS} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Recipient Phone Number</label>
+                      <Input 
+                        placeholder="+1 (555) 123-4567" 
+                        value={smsRecipient}
+                        onChange={(e) => setSmsRecipient(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Message</label>
+                      <textarea 
+                        className="w-full h-32 px-3 py-2 border rounded-md" 
+                        placeholder="Type your message here..."
+                        value={smsMessage}
+                        onChange={(e) => setSmsMessage(e.target.value)}
+                        required
+                      ></textarea>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={sendingSms}>
+                      {sendingSms ? (
+                        <>Sending...</>
+                      ) : (
+                        <><i className="ri-send-plane-line mr-2"></i> Send SMS</>
+                      )}
+                    </Button>
+                  </form>
+                </Card>
+                
+                <Card className="p-6">
+                  <h3 className="text-lg font-medium mb-4">Send Email</h3>
+                  <form onSubmit={handleSendEmail} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Recipient Email</label>
+                      <Input 
+                        placeholder="recipient@example.com" 
+                        value={emailRecipient}
+                        onChange={(e) => setEmailRecipient(e.target.value)}
+                        required
+                        type="email"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Subject</label>
+                      <Input 
+                        placeholder="Email subject" 
+                        value={emailSubject}
+                        onChange={(e) => setEmailSubject(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Message</label>
+                      <textarea 
+                        className="w-full h-32 px-3 py-2 border rounded-md" 
+                        placeholder="Type your email content here..."
+                        value={emailMessage}
+                        onChange={(e) => setEmailMessage(e.target.value)}
+                        required
+                      ></textarea>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={sendingEmail}>
+                      {sendingEmail ? (
+                        <>Sending...</>
+                      ) : (
+                        <><i className="ri-mail-send-line mr-2"></i> Send Email</>
+                      )}
+                    </Button>
+                  </form>
+                </Card>
+
+                <Card className="p-6 md:col-span-2">
+                  <h3 className="text-lg font-medium mb-4">API Status</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-3 p-3 border rounded-md">
+                      <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                      <div>
+                        <p className="font-medium">AWS SES</p>
+                        <p className="text-sm text-neutral-500">Email delivery service</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 border rounded-md">
+                      <div className="w-4 h-4 rounded-full bg-green-500"></div>
+                      <div>
+                        <p className="font-medium">Dialpad API</p>
+                        <p className="text-sm text-neutral-500">SMS delivery service</p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
               </div>
             </TabsContent>
 

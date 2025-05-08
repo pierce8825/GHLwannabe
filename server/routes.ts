@@ -4,9 +4,13 @@ import { storage } from "./storage";
 import { insertContactSchema, insertDealSchema, insertTaskSchema, insertActivitySchema, insertCampaignSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import messagingRoutes from "./routes/messaging.routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+  
+  // Register messaging routes
+  app.use('/api/messaging', messagingRoutes);
 
   // Contacts API
   app.get("/api/contacts", async (req, res) => {
