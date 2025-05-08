@@ -9,15 +9,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("account");
+  const [activeTeamTab, setActiveTeamTab] = useState("members");
   const [loading, setLoading] = useState(false);
   
   // Sample user data
   const user = {
+    id: 1,
     name: "Alex Johnson",
     email: "alex@example.com",
     role: "Administrator",
@@ -309,158 +312,253 @@ const Settings = () => {
 
           {activeTab === "team" && (
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <div>
-                  <CardTitle>Team Members</CardTitle>
-                  <CardDescription>
-                    Manage your team and user permissions
-                  </CardDescription>
-                </div>
-                <Button className="bg-primary text-white hover:bg-primary-dark">
-                  <i className="ri-user-add-line mr-2"></i> Add User
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="rounded-md border">
-                    <div className="grid grid-cols-5 p-4 font-medium border-b bg-gray-50">
-                      <div className="col-span-2">User</div>
-                      <div>Role</div>
-                      <div>Status</div>
-                      <div className="text-right">Actions</div>
-                    </div>
-                    <div className="divide-y">
-                      <div className="grid grid-cols-5 p-4 items-center">
-                        <div className="col-span-2 flex items-center">
-                          <Avatar className="mr-2">
-                            <AvatarFallback>AJ</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">Alex Johnson</div>
-                            <div className="text-sm text-neutral-500">alex@example.com</div>
-                          </div>
-                        </div>
-                        <div>
-                          <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
-                            Administrator
-                          </Badge>
-                        </div>
-                        <div>
-                          <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700">
-                            Active
-                          </Badge>
-                        </div>
-                        <div className="text-right">
-                          <Button variant="ghost" size="sm">
-                            <i className="ri-more-2-fill"></i>
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-5 p-4 items-center">
-                        <div className="col-span-2 flex items-center">
-                          <Avatar className="mr-2">
-                            <AvatarFallback>JD</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">Jane Doe</div>
-                            <div className="text-sm text-neutral-500">jane@example.com</div>
-                          </div>
-                        </div>
-                        <div>
-                          <Badge variant="outline" className="bg-purple-50 border-purple-200 text-purple-700">
-                            Manager
-                          </Badge>
-                        </div>
-                        <div>
-                          <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700">
-                            Active
-                          </Badge>
-                        </div>
-                        <div className="text-right">
-                          <Button variant="ghost" size="sm">
-                            <i className="ri-more-2-fill"></i>
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-5 p-4 items-center">
-                        <div className="col-span-2 flex items-center">
-                          <Avatar className="mr-2">
-                            <AvatarFallback>BS</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">Bob Smith</div>
-                            <div className="text-sm text-neutral-500">bob@example.com</div>
-                          </div>
-                        </div>
-                        <div>
-                          <Badge variant="outline" className="bg-gray-100 border-gray-200 text-gray-700">
-                            User
-                          </Badge>
-                        </div>
-                        <div>
-                          <Badge variant="outline" className="bg-amber-50 border-amber-200 text-amber-700">
-                            Invited
-                          </Badge>
-                        </div>
-                        <div className="text-right">
-                          <Button variant="ghost" size="sm">
-                            <i className="ri-more-2-fill"></i>
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+              <CardHeader>
+                <div className="flex flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle>Team Management</CardTitle>
+                    <CardDescription>
+                      Manage your team members and subaccounts
+                    </CardDescription>
                   </div>
-
-                  <div className="pt-6">
-                    <h3 className="text-lg font-medium mb-4">Role Permissions</h3>
-                    
+                </div>
+                <Tabs defaultValue="members" className="mt-4">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger 
+                      value="members" 
+                      onClick={() => setActiveTeamTab("members")}
+                      className={activeTeamTab === "members" ? "bg-blue-50 border-blue-200 text-blue-700" : ""}
+                    >
+                      Team Members
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="subaccounts" 
+                      onClick={() => setActiveTeamTab("subaccounts")}
+                      className={activeTeamTab === "subaccounts" ? "bg-blue-50 border-blue-200 text-blue-700" : ""}
+                    >
+                      Subaccounts
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </CardHeader>
+              
+              <CardContent>
+                {activeTeamTab === "members" && (
+                  <div className="space-y-4">
+                    <div className="flex justify-end">
+                      <Button className="bg-primary text-white hover:bg-primary-dark">
+                        <i className="ri-user-add-line mr-2"></i> Add Team Member
+                      </Button>
+                    </div>
                     <div className="rounded-md border">
-                      <div className="bg-gray-50 p-4 border-b">
-                        <div className="grid grid-cols-5 font-medium">
-                          <div className="col-span-2">Permission</div>
-                          <div>Administrator</div>
-                          <div>Manager</div>
-                          <div>User</div>
-                        </div>
+                      <div className="grid grid-cols-5 p-4 font-medium border-b bg-gray-50">
+                        <div className="col-span-2">User</div>
+                        <div>Role</div>
+                        <div>Status</div>
+                        <div className="text-right">Actions</div>
                       </div>
                       <div className="divide-y">
-                        <div className="p-4">
-                          <div className="grid grid-cols-5 items-center">
-                            <div className="col-span-2">
-                              <div className="font-medium">View Contacts</div>
-                              <div className="text-sm text-neutral-500">Access to view contact details</div>
+                        <div className="grid grid-cols-5 p-4 items-center">
+                          <div className="col-span-2 flex items-center">
+                            <Avatar className="mr-2">
+                              <AvatarFallback>AJ</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">Alex Johnson</div>
+                              <div className="text-sm text-neutral-500">alex@example.com</div>
                             </div>
-                            <div><Switch defaultChecked disabled /></div>
-                            <div><Switch defaultChecked disabled /></div>
-                            <div><Switch defaultChecked disabled /></div>
                           </div>
-                        </div>
-                        <div className="p-4">
-                          <div className="grid grid-cols-5 items-center">
-                            <div className="col-span-2">
-                              <div className="font-medium">Manage Deals</div>
-                              <div className="text-sm text-neutral-500">Create and update deals</div>
-                            </div>
-                            <div><Switch defaultChecked disabled /></div>
-                            <div><Switch defaultChecked disabled /></div>
-                            <div><Switch defaultChecked={false} disabled /></div>
+                          <div>
+                            <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+                              Administrator
+                            </Badge>
                           </div>
-                        </div>
-                        <div className="p-4">
-                          <div className="grid grid-cols-5 items-center">
-                            <div className="col-span-2">
-                              <div className="font-medium">Admin Settings</div>
-                              <div className="text-sm text-neutral-500">Access to all settings</div>
-                            </div>
-                            <div><Switch defaultChecked disabled /></div>
-                            <div><Switch defaultChecked={false} disabled /></div>
-                            <div><Switch defaultChecked={false} disabled /></div>
+                          <div>
+                            <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700">
+                              Active
+                            </Badge>
+                          </div>
+                          <div className="text-right">
+                            <Button variant="ghost" size="sm">
+                              <i className="ri-more-2-fill"></i>
+                            </Button>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
+                
+                {activeTeamTab === "subaccounts" && (
+                  <div className="space-y-4">
+                    <div className="flex justify-end">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button className="bg-primary text-white hover:bg-primary-dark">
+                            <i className="ri-user-add-line mr-2"></i> Create Subaccount
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Create Subaccount</DialogTitle>
+                            <DialogDescription>
+                              Create a new subaccount for a client or team member
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="username">Username</Label>
+                              <Input id="username" placeholder="Enter username" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="email">Email</Label>
+                              <Input id="email" type="email" placeholder="Enter email address" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="companyName">Company Name</Label>
+                              <Input id="companyName" placeholder="Enter company name" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="role">Role</Label>
+                              <Select defaultValue="user">
+                                <SelectTrigger id="role">
+                                  <SelectValue placeholder="Select role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="administrator">Administrator</SelectItem>
+                                  <SelectItem value="manager">Manager</SelectItem>
+                                  <SelectItem value="user">User</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button type="submit">Create Subaccount</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                    
+                    <div className="rounded-md border">
+                      <div className="grid grid-cols-6 p-4 font-medium border-b bg-gray-50">
+                        <div className="col-span-2">Subaccount</div>
+                        <div>Company</div>
+                        <div>Role</div>
+                        <div>Status</div>
+                        <div className="text-right">Actions</div>
+                      </div>
+                      <div className="divide-y">
+                        <div className="grid grid-cols-6 p-4 items-center">
+                          <div className="col-span-2 flex items-center">
+                            <Avatar className="mr-2">
+                              <AvatarFallback>AC</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">ABC Company</div>
+                              <div className="text-sm text-neutral-500">admin@abccompany.com</div>
+                            </div>
+                          </div>
+                          <div>
+                            ABC Corp
+                          </div>
+                          <div>
+                            <Badge variant="outline" className="bg-purple-50 border-purple-200 text-purple-700">
+                              Manager
+                            </Badge>
+                          </div>
+                          <div>
+                            <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700">
+                              Active
+                            </Badge>
+                          </div>
+                          <div className="text-right">
+                            <Button variant="ghost" size="sm">
+                              <i className="ri-more-2-fill"></i>
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-6 p-4 items-center">
+                          <div className="col-span-2 flex items-center">
+                            <Avatar className="mr-2">
+                              <AvatarFallback>XY</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">XYZ Inc</div>
+                              <div className="text-sm text-neutral-500">support@xyzinc.com</div>
+                            </div>
+                          </div>
+                          <div>
+                            XYZ Corporation
+                          </div>
+                          <div>
+                            <Badge variant="outline" className="bg-gray-100 border-gray-200 text-gray-700">
+                              User
+                            </Badge>
+                          </div>
+                          <div>
+                            <Badge variant="outline" className="bg-amber-50 border-amber-200 text-amber-700">
+                              Pending
+                            </Badge>
+                          </div>
+                          <div className="text-right">
+                            <Button variant="ghost" size="sm">
+                              <i className="ri-more-2-fill"></i>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-6">
+                      <h3 className="text-lg font-medium mb-4">Role Permissions</h3>
+                      
+                      <div className="rounded-md border">
+                        <div className="bg-gray-50 p-4 border-b">
+                          <div className="grid grid-cols-5 font-medium">
+                            <div className="col-span-2">Permission</div>
+                            <div>Administrator</div>
+                            <div>Manager</div>
+                            <div>User</div>
+                          </div>
+                        </div>
+                        <div className="divide-y">
+                          <div className="p-4">
+                            <div className="grid grid-cols-5 items-center">
+                              <div className="col-span-2">
+                                <div className="font-medium">View Contacts</div>
+                                <div className="text-sm text-neutral-500">Access to view contact details</div>
+                              </div>
+                              <div><Switch defaultChecked disabled /></div>
+                              <div><Switch defaultChecked disabled /></div>
+                              <div><Switch defaultChecked disabled /></div>
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <div className="grid grid-cols-5 items-center">
+                              <div className="col-span-2">
+                                <div className="font-medium">Manage Deals</div>
+                                <div className="text-sm text-neutral-500">Create and update deals</div>
+                              </div>
+                              <div><Switch defaultChecked disabled /></div>
+                              <div><Switch defaultChecked disabled /></div>
+                              <div><Switch defaultChecked={false} disabled /></div>
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <div className="grid grid-cols-5 items-center">
+                              <div className="col-span-2">
+                                <div className="font-medium">Admin Settings</div>
+                                <div className="text-sm text-neutral-500">Access to all settings</div>
+                              </div>
+                              <div><Switch defaultChecked disabled /></div>
+                              <div><Switch defaultChecked={false} disabled /></div>
+                              <div><Switch defaultChecked={false} disabled /></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
