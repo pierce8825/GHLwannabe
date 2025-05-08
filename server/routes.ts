@@ -1,10 +1,11 @@
 import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContactSchema, insertDealSchema, insertTaskSchema, insertActivitySchema, insertCampaignSchema } from "@shared/schema";
+import { insertContactSchema, insertDealSchema, insertTaskSchema, insertActivitySchema, insertCampaignSchema, insertUserSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import messagingRoutes from "./routes/messaging.routes";
+import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -255,6 +256,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(campaign);
     } catch (error) {
       res.status(500).json({ message: "Failed to update campaign status" });
+    }
+  });
+
+  // User and Subaccount API
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const user = await storage.getUser(parseInt(req.params.id));
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+  
+  app.put("/api/users/:id", async (req, res) => {
+    try {
+      // Create a subset schema for user updates that doesn't require password
+      const updateUserSchema = z.object({
+        fullName: z.string().optional(),
+        email: z.string().email().optional(),
+        role: z.string().optional(),
+        avatarUrl: z.string().optional().nullable(),
+        companyName: z.string().optional().nullable(),
+      });
+      
+      const userData = updateUserSchema.parse(req.body);
+      const user = await storage.updateUser(parseInt(req.params.id), userData);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+  
+  // Subaccount Management
+  app.get("/api/users/:id/subaccounts", async (req, res) => {
+    try {
+      const subaccounts = await storage.getSubaccounts(parseInt(req.params.id));
+      res.json(subaccounts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch subaccounts" });
+    }
+  });
+  
+  app.post("/api/users/:id/subaccounts", async (req, res) => {
+    try {
+      // Create a specific schema for subaccount creation
+      const createSubaccountSchema = z.object({
+        username: z.string(),
+        password: z.string(),
+        email: z.string().email(),
+        fullName: z.string(),
+        role: z.string().optional(),
+        companyName: z.string().optional(),
+      });
+      
+      const subaccountData = createSubaccountSchema.parse(req.body);
+      const parentId = parseInt(req.params.id);
+      
+      const subaccount = await storage.createSubaccount(subaccountData, parentId);
+      res.status(201).json(subaccount);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        return res.status(400).json({ message: validationError.message });
+      } else if (error instanceof Error) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to create subaccount" });
     }
   });
 

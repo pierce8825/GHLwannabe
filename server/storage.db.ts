@@ -27,6 +27,48 @@ export class DatabaseStorage implements IStorage {
     const [newUser] = await db.insert(users).values(user).returning();
     return newUser;
   }
+  
+  // Subaccount methods
+  async getSubaccounts(parentId: number): Promise<User[]> {
+    return await db.select()
+      .from(users)
+      .where(eq(users.parentId, parentId))
+      .where(eq(users.isSubaccount, true))
+      .execute();
+  }
+  
+  async createSubaccount(subaccount: InsertUser, parentId: number): Promise<User> {
+    const parentUser = await this.getUser(parentId);
+    if (!parentUser) {
+      throw new Error(`Parent user with ID ${parentId} not found`);
+    }
+    
+    const modifiedSubaccount: InsertUser = {
+      ...subaccount,
+      parentId,
+      isSubaccount: true,
+      // Inherit company name from parent if not explicitly provided
+      companyName: subaccount.companyName || parentUser.companyName
+    };
+    
+    const [newUser] = await db.insert(users).values(modifiedSubaccount).returning();
+    return newUser;
+  }
+  
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const existingUser = await this.getUser(id);
+    if (!existingUser) {
+      return undefined;
+    }
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    
+    return updatedUser;
+  }
 
   // Contact methods
   async getAllContacts(): Promise<Contact[]> {
