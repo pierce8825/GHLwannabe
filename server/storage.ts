@@ -14,6 +14,11 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
+  // Subaccounts
+  getSubaccounts(parentId: number): Promise<User[]>;
+  createSubaccount(subaccount: InsertUser, parentId: number): Promise<User>;
+  updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined>;
+  
   // Contacts
   getAllContacts(): Promise<Contact[]>;
   getContact(id: number): Promise<Contact | undefined>;
@@ -352,6 +357,48 @@ export class MemStorage implements IStorage {
     const newUser: User = { ...user, id };
     this.users.set(id, newUser);
     return newUser;
+  }
+  
+  // Subaccount methods
+  async getSubaccounts(parentId: number): Promise<User[]> {
+    return Array.from(this.users.values()).filter(
+      (user) => user.parentId === parentId && user.isSubaccount
+    );
+  }
+  
+  async createSubaccount(subaccount: InsertUser, parentId: number): Promise<User> {
+    const parentUser = await this.getUser(parentId);
+    if (!parentUser) {
+      throw new Error(`Parent user with ID ${parentId} not found`);
+    }
+    
+    const modifiedSubaccount: InsertUser = {
+      ...subaccount,
+      parentId,
+      isSubaccount: true,
+      // Inherit company name from parent if not explicitly provided
+      companyName: subaccount.companyName || parentUser.companyName
+    };
+    
+    return this.createUser(modifiedSubaccount);
+  }
+  
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const existingUser = this.users.get(id);
+    if (!existingUser) {
+      return undefined;
+    }
+    
+    // Update the user with the new data
+    const updatedUser: User = { 
+      ...existingUser,
+      ...userData,
+      // Make sure we don't override the ID
+      id: existingUser.id
+    };
+    
+    this.users.set(id, updatedUser);
+    return updatedUser;
   }
 
   // Contact methods

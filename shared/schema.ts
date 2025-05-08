@@ -13,6 +13,9 @@ export const users = pgTable("users", {
   fullName: text("full_name").notNull(),
   role: text("role").default("user").notNull(),
   avatarUrl: text("avatar_url"),
+  parentId: integer("parent_id"), // Reference to parent user for subaccounts
+  companyName: text("company_name"), // Company name for main account and subaccounts
+  isSubaccount: boolean("is_subaccount").default(false).notNull(), // Flag to identify subaccounts
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -22,6 +25,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
   fullName: true,
   role: true,
   avatarUrl: true,
+  parentId: true,
+  companyName: true,
+  isSubaccount: true,
 });
 
 // Contacts Schema
@@ -155,9 +161,15 @@ export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 
 // Define relations between tables
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   tasks: many(tasks, { relationName: "user_tasks" }),
   activities: many(activities, { relationName: "user_activities" }),
+  subaccounts: many(users, { relationName: "parent_subaccounts" }),
+  parent: one(users, {
+    fields: [users.parentId],
+    references: [users.id],
+    relationName: "parent_subaccounts",
+  }),
 }));
 
 export const contactsRelations = relations(contacts, ({ many }) => ({
