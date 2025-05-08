@@ -1,0 +1,20 @@
+All-in-One CRM — Manage leads, contacts, deals, pipelines, and sales in one place.
+	2.	Funnel Builder — Build landing pages, sales funnels, and lead capture forms without needing separate tools like ClickFunnels.
+	3.	Automated Workflows — Set up complex automation sequences across email, SMS, calls, and more.
+	4.	SMS & Email Marketing — Run mass SMS and email campaigns, including drip sequences and follow-ups.
+	5.	Reputation Management — Collect, monitor, and manage online reviews across platforms like Google and Facebook.
+	6.	Call Tracking & Recording — Track inbound and outbound calls, record them, and link them to CRM contacts.
+	7.	Two-Way SMS & Email Conversations — Text or email leads and clients directly from the platform and see threaded conversations.
+	8.	Appointment Scheduling — Built-in calendar and booking tools (similar to Calendly) for appointments, demos, or consultations.
+	9.	Pipeline Management — Visualize deals and lead stages with drag-and-drop kanban pipelines.
+	10.	Membership Sites — Build and host online courses, gated content, or membership programs.
+	11.	Survey & Form Builder — Create interactive surveys and forms to collect lead data or feedback.
+	12.	Chat Widget — Add a website chat widget that integrates directly into the CRM for lead capture.
+	13.	Mobile App (LeadConnector) — Access CRM, calendars, and communications on the go.
+	14.	White Labeling — Customize the platform with your agency’s branding and even use your own custom domain.
+	15.	Sub-Accounts for Clients — Manage multiple client accounts under your master agency account.
+	16.	Payment Integrations — Send invoices, collect payments, or set up subscriptions through Stripe or similar processors.
+	17.	Social Media Planner — Schedule and post content across social platforms like Facebook, Instagram, LinkedIn, and more.
+	18.	Lead & Opportunity Reporting — Track performance metrics, conversion rates, and ROI across campaigns.
+	19.	AI-Powered Tools — Use integrated AI (like ChatGPT) for email, text generation, and conversation insights.
+	20.	Integrations & API — Connect to external tools (Zapier, Make.com, custom API) to extend functionality.
