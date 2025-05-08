@@ -3,10 +3,14 @@ import { Deal } from "@shared/schema";
 import DealCard from "./deal-card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Upload } from "lucide-react";
 
 const KanbanBoard = () => {
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
 
   const { data: deals, isLoading, error } = useQuery<Deal[]>({
@@ -115,9 +119,17 @@ const KanbanBoard = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-neutral-800">Deal Pipeline</h1>
-        <button className="bg-primary text-white hover:bg-primary-dark px-4 py-2 rounded-lg font-medium text-sm flex items-center">
-          <i className="ri-add-line mr-2"></i> New Deal
-        </button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => navigate('/pipeline/import')}
+          >
+            <Upload className="mr-2 h-4 w-4" /> Import CSV
+          </Button>
+          <Button className="bg-primary text-white">
+            <i className="ri-add-line mr-2"></i> New Deal
+          </Button>
+        </div>
       </div>
       
       <div className="flex space-x-4 overflow-x-auto pb-6">

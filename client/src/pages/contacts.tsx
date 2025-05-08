@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Contact } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,9 +25,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import ContactForm from "@/components/contacts/contact-form";
 import { format } from "date-fns";
+import { FileSpreadsheet, Upload } from "lucide-react";
 
 const Contacts = () => {
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [showContactForm, setShowContactForm] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined);
@@ -140,8 +143,11 @@ const Contacts = () => {
               <Button variant="outline">
                 <i className="ri-filter-3-line mr-2"></i> Filter
               </Button>
-              <Button variant="outline">
-                <i className="ri-upload-2-line mr-2"></i> Import
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/contacts/import')}
+              >
+                <Upload className="mr-2 h-4 w-4" /> Import CSV
               </Button>
               <Button variant="outline">
                 <i className="ri-download-2-line mr-2"></i> Export
