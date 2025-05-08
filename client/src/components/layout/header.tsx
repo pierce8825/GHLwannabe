@@ -1,5 +1,7 @@
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { SubaccountSwitcher } from "./subaccount-switcher";
+import { Separator } from "@/components/ui/separator";
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -25,6 +27,8 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
           >
             <i className="ri-menu-line text-xl"></i>
           </button>
+          <SubaccountSwitcher />
+          <Separator orientation="vertical" className="mx-4 h-8" />
           <h1 className="text-xl font-semibold text-neutral-800">{getPageTitle()}</h1>
         </div>
         <div className="flex items-center space-x-4">
