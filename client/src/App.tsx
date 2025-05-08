@@ -13,6 +13,8 @@ import Messaging from "@/pages/messaging";
 import Calendar from "@/pages/calendar";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
+import ImportContacts from "@/pages/import-contacts";
+import ImportDeals from "@/pages/import-deals";
 import MainLayout from "./components/layout/main-layout";
 import { SubaccountProvider } from "./components/layout/subaccount-switcher";
 
@@ -23,7 +25,9 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/contacts" component={Contacts} />
+        <Route path="/contacts/import" component={ImportContacts} />
         <Route path="/pipeline" component={Pipeline} />
+        <Route path="/pipeline/import" component={ImportDeals} />
         <Route path="/campaigns" component={Campaigns} />
         <Route path="/funnels" component={Funnels} />
         <Route path="/automation" component={Automation} />
