@@ -368,6 +368,68 @@ export class MemStorage implements IStorage {
     for (const campaign of sampleCampaigns) {
       this.createCampaign(campaign);
     }
+    
+    // Create sample calendar events
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfterTomorrow = new Date(today);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    
+    const sampleCalendarEvents: InsertCalendarEvent[] = [
+      {
+        title: "Initial consultation with John Smith",
+        description: "Discuss website redesign project requirements",
+        start: new Date(today.setHours(10, 0, 0, 0)).toISOString(), 
+        end: new Date(today.setHours(11, 0, 0, 0)).toISOString(),
+        location: "Video call",
+        userId: 1,
+        contactId: 1,
+        dealId: 1,
+        allDay: false,
+        type: "meeting"
+      },
+      {
+        title: "Follow-up call with Sarah Jones",
+        description: "CRM implementation progress check",
+        start: new Date(tomorrow.setHours(14, 0, 0, 0)).toISOString(),
+        end: new Date(tomorrow.setHours(14, 30, 0, 0)).toISOString(),
+        location: "Phone",
+        userId: 1,
+        contactId: 2,
+        dealId: 2,
+        allDay: false,
+        type: "call"
+      },
+      {
+        title: "Presentation to Globe Media",
+        description: "Marketing automation platform demo",
+        start: new Date(dayAfterTomorrow.setHours(11, 0, 0, 0)).toISOString(),
+        end: new Date(dayAfterTomorrow.setHours(12, 30, 0, 0)).toISOString(),
+        location: "Client office",
+        userId: 1,
+        contactId: 3,
+        dealId: 3, 
+        allDay: false,
+        type: "meeting"
+      },
+      {
+        title: "Product strategy workshop",
+        description: "Full-day team workshop to plan Q3 roadmap",
+        start: new Date(nextWeek.setHours(9, 0, 0, 0)).toISOString(),
+        end: new Date(nextWeek.setHours(17, 0, 0, 0)).toISOString(),
+        location: "Conference room",
+        userId: 1,
+        allDay: true,
+        type: "workshop"
+      }
+    ];
+    
+    for (const event of sampleCalendarEvents) {
+      this.createCalendarEvent(event);
+    }
   }
 
   // User methods
@@ -752,6 +814,63 @@ export class MemStorage implements IStorage {
 
   async reorderFunnelSteps(funnelId: number, stepIds: number[]): Promise<FunnelStep[]> {
     throw new Error("Not implemented in MemStorage");
+  }
+  
+  // Calendar Events methods
+  async getAllCalendarEvents(): Promise<CalendarEvent[]> {
+    return Array.from(this.calendarEvents.values()).sort((a, b) => 
+      new Date(b.start).getTime() - new Date(a.start).getTime()
+    );
+  }
+
+  async getCalendarEvent(id: number): Promise<CalendarEvent | undefined> {
+    return this.calendarEvents.get(id);
+  }
+
+  async createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent> {
+    const id = this.calendarEventCurrentId++;
+    const now = new Date();
+    const newEvent: CalendarEvent = { 
+      ...event, 
+      id, 
+      createdAt: now,
+      updatedAt: now
+    };
+    this.calendarEvents.set(id, newEvent);
+    
+    // Create an activity for this new event if it's related to a contact
+    if (event.contactId) {
+      await this.createActivity({
+        type: "note",
+        title: "New calendar event created",
+        description: `${event.title} (${new Date(event.start).toLocaleString()})`,
+        contactId: event.contactId,
+        dealId: event.dealId,
+        createdBy: event.userId,
+      });
+    }
+    
+    return newEvent;
+  }
+
+  async updateCalendarEvent(id: number, eventData: Partial<InsertCalendarEvent>): Promise<CalendarEvent | undefined> {
+    const existingEvent = this.calendarEvents.get(id);
+    if (!existingEvent) {
+      return undefined;
+    }
+    
+    const updatedEvent: CalendarEvent = { 
+      ...existingEvent, 
+      ...eventData, 
+      id, 
+      updatedAt: new Date() 
+    };
+    this.calendarEvents.set(id, updatedEvent);
+    return updatedEvent;
+  }
+
+  async deleteCalendarEvent(id: number): Promise<boolean> {
+    return this.calendarEvents.delete(id);
   }
 }
 
