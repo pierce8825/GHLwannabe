@@ -162,17 +162,75 @@ const CalendarPage = () => {
       console.error("Failed to delete event:", error);
     }
   });
+  
+  // Mutation to update an existing calendar event
+  const updateEventMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await apiRequest(`/api/calendar/${id}`, 'PATCH', data);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
+      toast({
+        title: "Success!",
+        description: "Event has been updated.",
+      });
+      setSelectedEvent(null);
+      setShowEventDialog(false);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update the event. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Failed to update event:", error);
+    }
+  });
+  
+  // Function to handle event click for viewing/editing
+  const handleEventClick = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    
+    // Set form values based on event data
+    const startDate = new Date(event.start);
+    const endDate = new Date(event.end);
+    
+    form.reset({
+      title: event.title,
+      description: event.description || "",
+      type: event.type,
+      location: event.location || "",
+      allDay: event.allDay,
+      date: startDate,
+      startTime: `${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}`,
+      endTime: `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`,
+      contactId: event.contactId ? event.contactId.toString() : "",
+      dealId: event.dealId ? event.dealId.toString() : ""
+    });
+    
+    setShowEventDialog(true);
+  };
 
   // Handle form submission
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     // Create start and end dates from form data
-    const startDate = new Date(data.date);
-    const [startHours, startMinutes] = data.startTime.split(':').map(Number);
-    startDate.setHours(startHours, startMinutes, 0, 0);
+    let startDate = new Date(data.date);
+    let endDate = new Date(data.date);
     
-    const endDate = new Date(data.date);
-    const [endHours, endMinutes] = data.endTime.split(':').map(Number);
-    endDate.setHours(endHours, endMinutes, 0, 0);
+    if (data.allDay) {
+      // For all-day events, set to start of day and end of day
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // For timed events, use the form time values
+      const [startHours, startMinutes] = data.startTime.split(':').map(Number);
+      startDate.setHours(startHours, startMinutes, 0, 0);
+      
+      const [endHours, endMinutes] = data.endTime.split(':').map(Number);
+      endDate.setHours(endHours, endMinutes, 0, 0);
+    }
 
     // Create event data object
     const eventData = {
@@ -188,8 +246,15 @@ const CalendarPage = () => {
       userId: 1 // Default to first user for now
     };
 
-    // Submit the event
-    createEventMutation.mutate(eventData);
+    // Check if we're updating an existing event or creating a new one
+    if (selectedEvent) {
+      updateEventMutation.mutate({ 
+        id: selectedEvent.id, 
+        data: eventData 
+      });
+    } else {
+      createEventMutation.mutate(eventData);
+    }
   };
 
   // Get week days
@@ -393,7 +458,11 @@ const CalendarPage = () => {
                       {dayEvents.slice(0, 3).map(event => (
                         <div 
                           key={event.id} 
-                          className={`text-xs p-1 rounded truncate ${getEventTypeColor(event.type)}`}
+                          className={`text-xs p-1 rounded truncate cursor-pointer ${getEventTypeColor(event.type)}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEventClick(event);
+                          }}
                         >
                           {event.title}
                         </div>
@@ -455,7 +524,11 @@ const CalendarPage = () => {
                           {hourEvents.map(event => (
                             <div 
                               key={event.id} 
-                              className={`text-xs p-1 mb-1 rounded ${getEventTypeColor(event.type)}`}
+                              className={`text-xs p-1 mb-1 rounded cursor-pointer ${getEventTypeColor(event.type)}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEventClick(event);
+                              }}
                             >
                               {event.title}
                             </div>
@@ -501,10 +574,22 @@ const CalendarPage = () => {
                         {hourEvents.map(event => (
                           <div 
                             key={event.id} 
-                            className={`p-2 mb-1 rounded ${getEventTypeColor(event.type)}`}
+                            className={`p-2 mb-1 rounded cursor-pointer ${getEventTypeColor(event.type)}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEventClick(event);
+                            }}
                           >
                             <div className="font-medium">{event.title}</div>
-                            <div className="text-xs mt-1 opacity-80">{event.description}</div>
+                            {event.description && (
+                              <div className="text-xs mt-1 opacity-80">{event.description}</div>
+                            )}
+                            {event.location && (
+                              <div className="text-xs mt-1">
+                                <MapPinIcon className="inline-block h-3 w-3 mr-1" />
+                                {event.location}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -517,12 +602,25 @@ const CalendarPage = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={showEventDialog} onOpenChange={setShowEventDialog}>
+      <Dialog 
+        open={showEventDialog} 
+        onOpenChange={(open) => {
+          if (!open) {
+            // Reset form and selected event when dialog is closed
+            setSelectedEvent(null);
+            form.reset();
+          }
+          setShowEventDialog(open);
+        }}
+      >
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
-            <DialogTitle>Add New Event</DialogTitle>
+            <DialogTitle>{selectedEvent ? "Edit Event" : "Add New Event"}</DialogTitle>
             <DialogDescription>
-              Create a new event or appointment in your calendar.
+              {selectedEvent 
+                ? "Update the details of this calendar event." 
+                : "Create a new event or appointment in your calendar."
+              }
             </DialogDescription>
           </DialogHeader>
 
@@ -755,15 +853,43 @@ const CalendarPage = () => {
                 />
               </div>
 
-              <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setShowEventDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit">Save Event</Button>
+              <DialogFooter className={cn(
+                "flex flex-col-reverse sm:flex-row sm:justify-between",
+                selectedEvent ? "justify-between" : "justify-end"
+              )}>
+                {selectedEvent && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => {
+                      if (selectedEvent) {
+                        deleteEventMutation.mutate(selectedEvent.id);
+                        setShowEventDialog(false);
+                      }
+                    }}
+                    disabled={deleteEventMutation.isPending}
+                  >
+                    {deleteEventMutation.isPending ? "Deleting..." : "Delete Event"}
+                  </Button>
+                )}
+                <div className="flex gap-2 mt-2 sm:mt-0">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowEventDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit"
+                    disabled={createEventMutation.isPending || updateEventMutation.isPending}
+                  >
+                    {createEventMutation.isPending || updateEventMutation.isPending
+                      ? "Saving..."
+                      : selectedEvent ? "Update Event" : "Save Event"
+                    }
+                  </Button>
+                </div>
               </DialogFooter>
             </form>
           </Form>
