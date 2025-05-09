@@ -6,6 +6,7 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import messagingRoutes from "./routes/messaging.routes";
 import importRoutes from "./routes/import.routes";
+import funnelsRoutes from "./routes/funnels.routes";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -16,6 +17,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register import routes
   app.use('/api/import', importRoutes);
+  
+  // Register funnels routes
+  app.use('/api/funnels', funnelsRoutes);
 
   // Contacts API
   app.get("/api/contacts", async (req, res) => {
