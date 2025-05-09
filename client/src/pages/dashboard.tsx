@@ -5,11 +5,20 @@ import RecentActivity from "@/components/dashboard/recent-activity";
 import UpcomingTasks from "@/components/dashboard/upcoming-tasks";
 import { useState } from "react";
 import ContactForm from "@/components/contacts/contact-form";
+import { useLocation } from "wouter";
 
 const Dashboard = () => {
   const [showContactForm, setShowContactForm] = useState(false);
+  const [, setLocation] = useLocation();
 
-  const { data: stats, isLoading } = useQuery({
+  interface StatsData {
+    totalContacts: number;
+    openDeals: number;
+    activeCampaigns: number;
+    upcomingTasks: number;
+  }
+
+  const { data: stats, isLoading } = useQuery<StatsData>({
     queryKey: ["/api/stats"],
   });
 
@@ -23,7 +32,12 @@ const Dashboard = () => {
             <p className="text-neutral-500 mt-1">Here's what's happening with your business today.</p>
           </div>
           <div className="mt-4 md:mt-0 flex space-x-2">
-            <button className="bg-white text-primary border border-primary hover:bg-blue-50 px-4 py-2 rounded-lg font-medium text-sm flex items-center">
+            <button 
+              className="bg-white text-primary border border-primary hover:bg-blue-50 px-4 py-2 rounded-lg font-medium text-sm flex items-center"
+              onClick={() => {
+                setLocation("/import-contacts");
+              }}
+            >
               <i className="ri-upload-2-line mr-2"></i> Import
             </button>
             <button 

@@ -158,18 +158,35 @@ const FunnelStep = ({ step }: FunnelStepProps) => {
               <div className="flex items-center border rounded-md p-2">
                 <Input disabled value="Email" className="w-1/3 mr-2 bg-gray-50" />
                 <Input placeholder="Placeholder text" className="flex-1" />
-                <button className="ml-2 text-neutral-400 hover:text-neutral-600">
+                <button 
+                  className="ml-2 text-neutral-400 hover:text-neutral-600"
+                  onClick={() => {
+                    alert("Field would be removed.");
+                  }}
+                >
                   <i className="ri-delete-bin-line"></i>
                 </button>
               </div>
               <div className="flex items-center border rounded-md p-2">
                 <Input disabled value="Name" className="w-1/3 mr-2 bg-gray-50" />
                 <Input placeholder="Placeholder text" className="flex-1" />
-                <button className="ml-2 text-neutral-400 hover:text-neutral-600">
+                <button 
+                  className="ml-2 text-neutral-400 hover:text-neutral-600"
+                  onClick={() => {
+                    alert("Field would be removed.");
+                  }}
+                >
                   <i className="ri-delete-bin-line"></i>
                 </button>
               </div>
-              <Button size="sm" variant="outline" className="w-full">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="w-full"
+                onClick={() => {
+                  alert("New field would be added to the form.");
+                }}
+              >
                 <i className="ri-add-line mr-2"></i> Add Field
               </Button>
             </div>
@@ -351,12 +368,30 @@ const FunnelStep = ({ step }: FunnelStepProps) => {
               <div>
                 <label className="text-sm font-medium">Background</label>
                 <div className="flex space-x-2 mt-1">
-                  <div className="w-8 h-8 rounded-full bg-white border border-gray-200 cursor-pointer"></div>
-                  <div className="w-8 h-8 rounded-full bg-gray-100 cursor-pointer"></div>
-                  <div className="w-8 h-8 rounded-full bg-blue-50 cursor-pointer"></div>
-                  <div className="w-8 h-8 rounded-full bg-purple-50 cursor-pointer"></div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 cursor-pointer"></div>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center border border-dashed border-gray-300 text-gray-400 cursor-pointer">
+                  <div 
+                    className="w-8 h-8 rounded-full bg-white border border-gray-200 cursor-pointer"
+                    onClick={() => alert("White background selected")}
+                  ></div>
+                  <div 
+                    className="w-8 h-8 rounded-full bg-gray-100 cursor-pointer"
+                    onClick={() => alert("Light gray background selected")}
+                  ></div>
+                  <div 
+                    className="w-8 h-8 rounded-full bg-blue-50 cursor-pointer"
+                    onClick={() => alert("Light blue background selected")}
+                  ></div>
+                  <div 
+                    className="w-8 h-8 rounded-full bg-purple-50 cursor-pointer"
+                    onClick={() => alert("Light purple background selected")}
+                  ></div>
+                  <div 
+                    className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 cursor-pointer"
+                    onClick={() => alert("Gradient background selected")}
+                  ></div>
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center border border-dashed border-gray-300 text-gray-400 cursor-pointer"
+                    onClick={() => alert("Custom color picker would open here")}
+                  >
                     <i className="ri-add-line"></i>
                   </div>
                 </div>

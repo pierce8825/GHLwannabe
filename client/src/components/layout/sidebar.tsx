@@ -200,7 +200,15 @@ const Sidebar = ({ open, setOpen, isMobile }: SidebarProps) => {
                 <p className="font-medium text-sm">Alex Johnson</p>
                 <p className="text-xs text-neutral-500">Administrator</p>
               </div>
-              <button className="ml-auto text-neutral-400 hover:text-neutral-600">
+              <button 
+                className="ml-auto text-neutral-400 hover:text-neutral-600"
+                onClick={() => {
+                  if (confirm("Are you sure you want to log out?")) {
+                    alert("You have been logged out.");
+                    window.location.href = "/";
+                  }
+                }}
+              >
                 <i className="ri-logout-box-r-line"></i>
               </button>
             </>
