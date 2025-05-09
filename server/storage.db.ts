@@ -432,4 +432,48 @@ export class DatabaseStorage implements IStorage {
     // Return the updated steps in order
     return await this.getFunnelSteps(funnelId);
   }
+
+  // Calendar Events methods
+  async getAllCalendarEvents(): Promise<CalendarEvent[]> {
+    return await db.select().from(calendarEvents)
+      .orderBy(desc(calendarEvents.start));
+  }
+
+  async getCalendarEvent(id: number): Promise<CalendarEvent | undefined> {
+    const [event] = await db.select().from(calendarEvents).where(eq(calendarEvents.id, id));
+    return event || undefined;
+  }
+
+  async createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent> {
+    const [newEvent] = await db.insert(calendarEvents).values(event).returning();
+    
+    // Create an activity for this new event if it's related to a contact
+    if (event.contactId) {
+      await this.createActivity({
+        type: "note",
+        title: "New calendar event created",
+        description: `${event.title} (${new Date(event.start).toLocaleString()})`,
+        contactId: event.contactId,
+        dealId: event.dealId,
+        createdBy: event.userId,
+      });
+    }
+    
+    return newEvent;
+  }
+
+  async updateCalendarEvent(id: number, eventData: Partial<InsertCalendarEvent>): Promise<CalendarEvent | undefined> {
+    const [updatedEvent] = await db
+      .update(calendarEvents)
+      .set({ ...eventData, updatedAt: new Date() })
+      .where(eq(calendarEvents.id, id))
+      .returning();
+    
+    return updatedEvent || undefined;
+  }
+
+  async deleteCalendarEvent(id: number): Promise<boolean> {
+    const result = await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
 }

@@ -1,5 +1,5 @@
 import { 
-  users, contacts, deals, tasks, activities, campaigns, funnels, funnelSteps,
+  users, contacts, deals, tasks, activities, campaigns, funnels, funnelSteps, calendarEvents,
   type User, type InsertUser, 
   type Contact, type InsertContact,
   type Deal, type InsertDeal,
@@ -7,7 +7,8 @@ import {
   type Activity, type InsertActivity,
   type Campaign, type InsertCampaign,
   type Funnel, type InsertFunnel,
-  type FunnelStep, type InsertFunnelStep
+  type FunnelStep, type InsertFunnelStep,
+  type CalendarEvent, type InsertCalendarEvent
 } from "@shared/schema";
 
 export interface IStorage {
@@ -87,6 +88,7 @@ export class MemStorage implements IStorage {
   private tasks: Map<number, Task>;
   private activities: Map<number, Activity>;
   private campaigns: Map<number, Campaign>;
+  private calendarEvents: Map<number, CalendarEvent>;
   
   private userCurrentId: number;
   private contactCurrentId: number;
@@ -94,6 +96,7 @@ export class MemStorage implements IStorage {
   private taskCurrentId: number;
   private activityCurrentId: number;
   private campaignCurrentId: number;
+  private calendarEventCurrentId: number;
 
   constructor() {
     this.users = new Map();
@@ -102,6 +105,7 @@ export class MemStorage implements IStorage {
     this.tasks = new Map();
     this.activities = new Map();
     this.campaigns = new Map();
+    this.calendarEvents = new Map();
     
     this.userCurrentId = 1;
     this.contactCurrentId = 1;
@@ -109,6 +113,7 @@ export class MemStorage implements IStorage {
     this.taskCurrentId = 1;
     this.activityCurrentId = 1;
     this.campaignCurrentId = 1;
+    this.calendarEventCurrentId = 1;
     
     // Initialize with some sample data
     this.initializeSampleData();
