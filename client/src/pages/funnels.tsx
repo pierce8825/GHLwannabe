@@ -96,6 +96,11 @@ const Funnels = () => {
     }
   ];
 
+  const handleUseTemplate = (template: any) => {
+    // Set the template and move to the builder
+    setShowBuilder(true);
+  };
+
   const renderTemplate = (template: any) => (
     <Card key={template.id} className="hover:shadow-md transition-shadow cursor-pointer">
       <CardContent className="p-6">
@@ -109,10 +114,26 @@ const Funnels = () => {
           </div>
         </div>
         <p className="text-sm text-neutral-600 mb-4">{template.description}</p>
-        <Button size="sm" className="w-full">Use Template</Button>
+        <Button 
+          size="sm" 
+          className="w-full"
+          onClick={() => handleUseTemplate(template)}
+        >
+          Use Template
+        </Button>
       </CardContent>
     </Card>
   );
+
+  const handleEditDraft = (draft: any) => {
+    // Edit the draft funnel
+    setShowBuilder(true);
+  };
+
+  const handlePreviewDraft = (draft: any) => {
+    // Preview the draft funnel (could show a preview modal)
+    alert(`Preview of "${draft.name}" funnel would appear here.`);
+  };
 
   const renderDraft = (draft: any) => (
     <Card key={draft.id} className="hover:shadow-md transition-shadow">
@@ -124,12 +145,38 @@ const Funnels = () => {
           <span>{draft.steps} steps</span>
         </div>
         <div className="flex space-x-2">
-          <Button size="sm" className="flex-1">Edit</Button>
-          <Button size="sm" variant="outline" className="flex-1">Preview</Button>
+          <Button 
+            size="sm" 
+            className="flex-1"
+            onClick={() => handleEditDraft(draft)}
+          >
+            Edit
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="flex-1"
+            onClick={() => handlePreviewDraft(draft)}
+          >
+            Preview
+          </Button>
         </div>
       </CardContent>
     </Card>
   );
+
+  const handleEditActiveFunnel = (funnel: any) => {
+    // Edit the active funnel
+    setShowBuilder(true);
+  };
+
+  const handleViewAnalytics = (funnel: any) => {
+    // Show analytics for the funnel
+    alert(`Analytics for "${funnel.name}" would appear here. 
+Visitors: ${funnel.stats.visitors}
+Conversions: ${funnel.stats.conversions}
+Rate: ${funnel.stats.rate}`);
+  };
 
   const renderActive = (funnel: any) => (
     <Card key={funnel.id} className="hover:shadow-md transition-shadow">
@@ -153,8 +200,21 @@ const Funnels = () => {
         </div>
         
         <div className="flex space-x-2">
-          <Button size="sm" className="flex-1">Edit</Button>
-          <Button size="sm" variant="outline" className="flex-1">Analytics</Button>
+          <Button 
+            size="sm" 
+            className="flex-1"
+            onClick={() => handleEditActiveFunnel(funnel)}
+          >
+            Edit
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="flex-1"
+            onClick={() => handleViewAnalytics(funnel)}
+          >
+            Analytics
+          </Button>
         </div>
       </CardContent>
     </Card>

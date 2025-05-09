@@ -137,7 +137,16 @@ const FunnelStep = ({ step }: FunnelStepProps) => {
             <div className="border border-dashed rounded-md p-4 flex flex-col items-center justify-center">
               <i className="ri-image-add-line text-3xl text-neutral-300"></i>
               <p className="text-sm text-neutral-500 mt-2">Drag and drop an image or click to upload</p>
-              <Button size="sm" variant="outline" className="mt-2">Upload Image</Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="mt-2"
+                onClick={() => {
+                  alert("Image upload dialog would open here.");
+                }}
+              >
+                Upload Image
+              </Button>
             </div>
           </div>
         );
@@ -209,7 +218,12 @@ const FunnelStep = ({ step }: FunnelStepProps) => {
               </SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => {
+              alert(`Preview of "${stepTitle}" step would appear here.`);
+            }}
+          >
             <i className="ri-eye-line mr-2"></i> Preview
           </Button>
         </div>

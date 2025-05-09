@@ -71,10 +71,20 @@ const Campaigns = () => {
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  alert("Filter options would appear here.");
+                }}
+              >
                 <i className="ri-filter-3-line mr-2"></i> Filter
               </Button>
-              <Button variant="outline">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  alert("Campaign analytics dashboard would appear here.");
+                }}
+              >
                 <i className="ri-bar-chart-2-line mr-2"></i> Analytics
               </Button>
             </div>

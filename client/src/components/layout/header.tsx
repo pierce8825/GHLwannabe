@@ -40,13 +40,28 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
               type="text" 
               placeholder="Search..." 
               className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  alert('Search functionality would trigger here');
+                }
+              }}
             />
           </div>
-          <button className="p-2 rounded-md text-neutral-500 hover:bg-gray-100 relative">
+          <button 
+            className="p-2 rounded-md text-neutral-500 hover:bg-gray-100 relative"
+            onClick={() => {
+              alert('Notifications panel would open here');
+            }}
+          >
             <i className="ri-notification-3-line text-xl"></i>
             <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-danger"></span>
           </button>
-          <button className="p-2 rounded-md text-neutral-500 hover:bg-gray-100">
+          <button 
+            className="p-2 rounded-md text-neutral-500 hover:bg-gray-100"
+            onClick={() => {
+              alert('Help center and documentation would open here');
+            }}
+          >
             <i className="ri-question-line text-xl"></i>
           </button>
         </div>

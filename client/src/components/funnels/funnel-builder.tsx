@@ -90,13 +90,29 @@ const FunnelBuilder = ({ onBack }: FunnelBuilderProps) => {
           />
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => {
+              alert(`Preview of "${funnelName}" would appear here.`);
+            }}
+          >
             <i className="ri-eye-line mr-2"></i> Preview
           </Button>
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => {
+              alert(`"${funnelName}" has been saved as a draft.`);
+            }}
+          >
             <i className="ri-save-line mr-2"></i> Save
           </Button>
-          <Button className="bg-primary text-white hover:bg-primary-dark">
+          <Button 
+            className="bg-primary text-white hover:bg-primary-dark"
+            onClick={() => {
+              alert(`"${funnelName}" has been published successfully!`);
+              onBack();
+            }}
+          >
             <i className="ri-rocket-line mr-2"></i> Publish
           </Button>
         </div>
@@ -214,7 +230,12 @@ const FunnelBuilder = ({ onBack }: FunnelBuilderProps) => {
                     <p className="text-sm text-neutral-400 mt-1">
                       Create automated email sequences, notifications, and follow-ups
                     </p>
-                    <Button className="mt-4">
+                    <Button 
+                      className="mt-4"
+                      onClick={() => {
+                        alert("Automation builder would open here.");
+                      }}
+                    >
                       <i className="ri-add-line mr-2"></i> Add Automation
                     </Button>
                   </div>
