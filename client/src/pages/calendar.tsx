@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -14,63 +14,88 @@ import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "lucid
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+// Define event type for calendar
+interface CalendarEvent {
+  id: number;
+  title: string;
+  description: string | null;
+  start: string;
+  end: string;
+  type: string;
+  location: string | null;
+  userId: number;
+  contactId: number | null;
+  dealId: number | null;
+  allDay: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const CalendarPage = () => {
+  const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [view, setView] = useState<"month" | "week" | "day">("week");
   const [showEventDialog, setShowEventDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
-  // Sample events
-  const events = [
-    {
-      id: 1,
-      title: "Demo with Acme Inc.",
-      description: "Website redesign project discussion",
-      start: new Date(new Date().setHours(10, 0, 0, 0)),
-      end: new Date(new Date().setHours(11, 0, 0, 0)),
-      type: "meeting",
-      contactId: 1
-    },
-    {
-      id: 2,
-      title: "Call with TechStar Solutions",
-      description: "CRM implementation follow-up",
-      start: new Date(new Date().setHours(14, 30, 0, 0)),
-      end: new Date(new Date().setHours(15, 0, 0, 0)),
-      type: "call",
-      contactId: 2
-    },
-    {
-      id: 3,
-      title: "Prepare proposal for Globe Media",
-      description: "Draft marketing automation proposal",
-      start: new Date(new Date().setHours(9, 0, 0, 0)),
-      end: new Date(new Date().setHours(10, 0, 0, 0)),
-      type: "task",
-      contactId: 3
-    },
-    {
-      id: 4,
-      title: "Follow up with Vertex Inc.",
-      description: "Sales funnel optimization discussion",
-      start: new Date(new Date().setDate(new Date().getDate() + 1)).setHours(11, 0, 0, 0),
-      end: new Date(new Date().setDate(new Date().getDate() + 1)).setHours(12, 0, 0, 0),
-      type: "call",
-      contactId: 4
+  // Fetch calendar events
+  const { data: events = [], isLoading } = useQuery({
+    queryKey: ['/api/calendar'],
+    queryFn: async () => {
+      const response = await fetch('/api/calendar');
+      if (!response.ok) {
+        throw new Error('Failed to fetch calendar events');
+      }
+      const data = await response.json();
+      return data as CalendarEvent[];
     }
-  ];
+  });
+
+  // Process calendar events for UI
+  const processedEvents = events.map(event => ({
+    ...event,
+    start: new Date(event.start),
+    end: new Date(event.end)
+  }));
 
   // Form schema for new event
   const formSchema = z.object({
     title: z.string().min(1, "Title is required"),
     description: z.string().optional(),
     type: z.string(),
+    location: z.string().optional(),
+    allDay: z.boolean().default(false),
     date: z.date(),
     startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
     endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
-    contactId: z.string().optional()
+    contactId: z.string().optional(),
+    dealId: z.string().optional()
   });
+
+  // Reset form when selected date changes
+  useEffect(() => {
+    if (selectedDate) {
+      form.setValue('date', selectedDate);
+      const hours = selectedDate.getHours();
+      const minutes = selectedDate.getMinutes();
+      
+      // Format time as HH:MM
+      const formattedHours = hours.toString().padStart(2, '0');
+      const formattedMinutes = minutes.toString().padStart(2, '0');
+      form.setValue('startTime', `${formattedHours}:${formattedMinutes}`);
+      
+      // Set end time to 1 hour later
+      const endHour = (hours + 1) % 24;
+      const formattedEndHour = endHour.toString().padStart(2, '0');
+      form.setValue('endTime', `${formattedEndHour}:${formattedMinutes}`);
+    }
+  }, [selectedDate]);
 
   // Form for new event
   const form = useForm<z.infer<typeof formSchema>>({
@@ -79,19 +104,92 @@ const CalendarPage = () => {
       title: "",
       description: "",
       type: "meeting",
+      location: "",
+      allDay: false,
       date: selectedDate,
       startTime: "09:00",
       endTime: "10:00",
-      contactId: ""
+      contactId: "",
+      dealId: ""
     }
   });
 
-  // Handle adding event
+  // Mutation to create a new calendar event
+  const createEventMutation = useMutation({
+    mutationFn: async (eventData: any) => {
+      const response = await apiRequest('/api/calendar', 'POST', eventData);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
+      toast({
+        title: "Success!",
+        description: "Event has been created.",
+      });
+      setShowEventDialog(false);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create the event. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Failed to create event:", error);
+    }
+  });
+
+  // Mutation to delete a calendar event
+  const deleteEventMutation = useMutation({
+    mutationFn: async (eventId: number) => {
+      const response = await apiRequest(`/api/calendar/${eventId}`, 'DELETE');
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar'] });
+      toast({
+        title: "Success!",
+        description: "Event has been deleted.",
+      });
+      setSelectedEvent(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete the event. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Failed to delete event:", error);
+    }
+  });
+
+  // Handle form submission
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    console.log("New event:", data);
-    // In a real app, this would send the event to the backend
-    setShowEventDialog(false);
-    form.reset();
+    // Create start and end dates from form data
+    const startDate = new Date(data.date);
+    const [startHours, startMinutes] = data.startTime.split(':').map(Number);
+    startDate.setHours(startHours, startMinutes, 0, 0);
+    
+    const endDate = new Date(data.date);
+    const [endHours, endMinutes] = data.endTime.split(':').map(Number);
+    endDate.setHours(endHours, endMinutes, 0, 0);
+
+    // Create event data object
+    const eventData = {
+      title: data.title,
+      description: data.description || null,
+      type: data.type,
+      location: data.location || null,
+      allDay: data.allDay,
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+      contactId: data.contactId ? parseInt(data.contactId) : null,
+      dealId: data.dealId ? parseInt(data.dealId) : null,
+      userId: 1 // Default to first user for now
+    };
+
+    // Submit the event
+    createEventMutation.mutate(eventData);
   };
 
   // Get week days
@@ -482,10 +580,45 @@ const CalendarPage = () => {
                           <SelectItem value="meeting">Meeting</SelectItem>
                           <SelectItem value="call">Call</SelectItem>
                           <SelectItem value="task">Task</SelectItem>
+                          <SelectItem value="workshop">Workshop</SelectItem>
                           <SelectItem value="reminder">Reminder</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Where is this event?" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="allDay"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>All-day event</FormLabel>
+                      </div>
                     </FormItem>
                   )}
                 />
@@ -533,62 +666,94 @@ const CalendarPage = () => {
                 />
               </div>
 
+              {!form.watch("allDay") && (
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="startTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Time</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="endTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Time</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="startTime"
+                  name="contactId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Time</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
+                      <FormLabel>Related Contact</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select contact (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1">John Smith (Acme Inc.)</SelectItem>
+                          <SelectItem value="2">Sarah Jones (TechStar)</SelectItem>
+                          <SelectItem value="3">Michael Davis (Globe Media)</SelectItem>
+                          <SelectItem value="4">Jennifer Wilson (Vertex Inc.)</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
+                
                 <FormField
                   control={form.control}
-                  name="endTime"
+                  name="dealId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>End Time</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
+                      <FormLabel>Related Deal</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select deal (optional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1">Website redesign project</SelectItem>
+                          <SelectItem value="2">CRM implementation</SelectItem>
+                          <SelectItem value="3">Marketing automation</SelectItem>
+                          <SelectItem value="4">Sales funnel optimization</SelectItem>
+                          <SelectItem value="5">Complete CRM package</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-
-              <FormField
-                control={form.control}
-                name="contactId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Related Contact</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select contact (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1">John Smith (Acme Inc.)</SelectItem>
-                        <SelectItem value="2">Sarah Jones (TechStar)</SelectItem>
-                        <SelectItem value="3">Michael Davis (Globe Media)</SelectItem>
-                        <SelectItem value="4">Jennifer Wilson (Vertex Inc.)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <DialogFooter>
                 <Button 
