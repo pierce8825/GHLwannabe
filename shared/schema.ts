@@ -157,14 +157,63 @@ export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Activity = typeof activities.$inferSelect;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 
+// Funnels Schema
+export const funnels = pgTable("funnels", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: text("status").default("draft").notNull(), // draft, active, archived
+  userId: integer("user_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertFunnelSchema = createInsertSchema(funnels).pick({
+  name: true,
+  description: true,
+  status: true,
+  userId: true,
+});
+
+// Funnel Steps Schema
+export const funnelSteps = pgTable("funnel_steps", {
+  id: serial("id").primaryKey(),
+  funnelId: integer("funnel_id").notNull(),
+  title: text("title").notNull(),
+  type: text("type").notNull(), // landing, form, thank-you, upsell, etc.
+  order: integer("order").notNull(),
+  content: jsonb("content"), // The structure of the page content
+  settings: jsonb("settings"), // Background, SEO settings, etc.
+  slug: text("slug"), // URL slug for the step
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertFunnelStepSchema = createInsertSchema(funnelSteps).pick({
+  funnelId: true,
+  title: true,
+  type: true,
+  order: true,
+  content: true,
+  settings: true,
+  slug: true,
+});
+
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
+
+export type Funnel = typeof funnels.$inferSelect;
+export type InsertFunnel = z.infer<typeof insertFunnelSchema>;
+
+export type FunnelStep = typeof funnelSteps.$inferSelect;
+export type InsertFunnelStep = z.infer<typeof insertFunnelStepSchema>;
 
 // Define relations between tables
 export const usersRelations = relations(users, ({ many, one }) => ({
   tasks: many(tasks, { relationName: "user_tasks" }),
   activities: many(activities, { relationName: "user_activities" }),
   subaccounts: many(users, { relationName: "parent_subaccounts" }),
+  funnels: many(funnels, { relationName: "user_funnels" }),
   parent: one(users, {
     fields: [users.parentId],
     references: [users.id],
@@ -221,5 +270,23 @@ export const activitiesRelations = relations(activities, ({ one }) => ({
     fields: [activities.createdBy],
     references: [users.id],
     relationName: "user_activities",
+  }),
+}));
+
+// Funnel and Funnel Steps relations
+export const funnelsRelations = relations(funnels, ({ one, many }) => ({
+  user: one(users, {
+    fields: [funnels.userId],
+    references: [users.id],
+    relationName: "user_funnels",
+  }),
+  steps: many(funnelSteps, { relationName: "funnel_steps" }),
+}));
+
+export const funnelStepsRelations = relations(funnelSteps, ({ one }) => ({
+  funnel: one(funnels, {
+    fields: [funnelSteps.funnelId],
+    references: [funnels.id],
+    relationName: "funnel_steps",
   }),
 }));

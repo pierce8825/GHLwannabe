@@ -1,11 +1,13 @@
 import { 
-  users, contacts, deals, tasks, activities, campaigns,
+  users, contacts, deals, tasks, activities, campaigns, funnels, funnelSteps,
   type User, type InsertUser, 
   type Contact, type InsertContact,
   type Deal, type InsertDeal,
   type Task, type InsertTask,
   type Activity, type InsertActivity,
-  type Campaign, type InsertCampaign
+  type Campaign, type InsertCampaign,
+  type Funnel, type InsertFunnel,
+  type FunnelStep, type InsertFunnelStep
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
