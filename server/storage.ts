@@ -1,11 +1,13 @@
 import { 
-  users, contacts, deals, tasks, activities, campaigns,
+  users, contacts, deals, tasks, activities, campaigns, funnels, funnelSteps,
   type User, type InsertUser, 
   type Contact, type InsertContact,
   type Deal, type InsertDeal,
   type Task, type InsertTask,
   type Activity, type InsertActivity,
-  type Campaign, type InsertCampaign
+  type Campaign, type InsertCampaign,
+  type Funnel, type InsertFunnel,
+  type FunnelStep, type InsertFunnelStep
 } from "@shared/schema";
 
 export interface IStorage {
@@ -53,6 +55,22 @@ export interface IStorage {
   getCampaign(id: number): Promise<Campaign | undefined>;
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   updateCampaignStatus(id: number, status: string): Promise<Campaign | undefined>;
+  
+  // Funnels
+  getAllFunnels(userId: number): Promise<Funnel[]>;
+  getFunnel(id: number): Promise<Funnel | undefined>;
+  createFunnel(funnel: InsertFunnel): Promise<Funnel>;
+  updateFunnel(id: number, funnelData: Partial<InsertFunnel>): Promise<Funnel | undefined>;
+  updateFunnelStatus(id: number, status: string): Promise<Funnel | undefined>;
+  deleteFunnel(id: number): Promise<boolean>;
+  
+  // Funnel Steps
+  getFunnelSteps(funnelId: number): Promise<FunnelStep[]>;
+  getFunnelStep(id: number): Promise<FunnelStep | undefined>;
+  createFunnelStep(step: InsertFunnelStep): Promise<FunnelStep>;
+  updateFunnelStep(id: number, stepData: Partial<InsertFunnelStep>): Promise<FunnelStep | undefined>;
+  deleteFunnelStep(id: number): Promise<boolean>;
+  reorderFunnelSteps(funnelId: number, stepIds: number[]): Promise<FunnelStep[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -672,6 +690,56 @@ export class MemStorage implements IStorage {
     });
     
     return updatedCampaign;
+  }
+
+  // Funnel methods (stubs for MemStorage)
+  async getAllFunnels(userId: number): Promise<Funnel[]> {
+    return [];
+  }
+
+  async getFunnel(id: number): Promise<Funnel | undefined> {
+    return undefined;
+  }
+
+  async createFunnel(funnel: InsertFunnel): Promise<Funnel> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async updateFunnel(id: number, funnelData: Partial<InsertFunnel>): Promise<Funnel | undefined> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async updateFunnelStatus(id: number, status: string): Promise<Funnel | undefined> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async deleteFunnel(id: number): Promise<boolean> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  // Funnel Step methods (stubs for MemStorage)
+  async getFunnelSteps(funnelId: number): Promise<FunnelStep[]> {
+    return [];
+  }
+
+  async getFunnelStep(id: number): Promise<FunnelStep | undefined> {
+    return undefined;
+  }
+
+  async createFunnelStep(step: InsertFunnelStep): Promise<FunnelStep> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async updateFunnelStep(id: number, stepData: Partial<InsertFunnelStep>): Promise<FunnelStep | undefined> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async deleteFunnelStep(id: number): Promise<boolean> {
+    throw new Error("Not implemented in MemStorage");
+  }
+
+  async reorderFunnelSteps(funnelId: number, stepIds: number[]): Promise<FunnelStep[]> {
+    throw new Error("Not implemented in MemStorage");
   }
 }
 

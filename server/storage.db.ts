@@ -11,7 +11,7 @@ import {
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { db } from "./db";
-import { eq, desc, count } from "drizzle-orm";
+import { eq, desc, count, and } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
   // User methods
@@ -34,9 +34,12 @@ export class DatabaseStorage implements IStorage {
   async getSubaccounts(parentId: number): Promise<User[]> {
     return await db.select()
       .from(users)
-      .where(eq(users.parentId, parentId))
-      .where(eq(users.isSubaccount, true))
-      .execute();
+      .where(
+        and(
+          eq(users.parentId, parentId),
+          eq(users.isSubaccount, true)
+        )
+      );
   }
   
   async createSubaccount(subaccount: InsertUser, parentId: number): Promise<User> {
@@ -295,5 +298,137 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedCampaign || undefined;
+  }
+
+  // Funnel methods
+  async getAllFunnels(userId: number): Promise<Funnel[]> {
+    return await db
+      .select()
+      .from(funnels)
+      .where(eq(funnels.userId, userId))
+      .orderBy(desc(funnels.updatedAt));
+  }
+
+  async getFunnel(id: number): Promise<Funnel | undefined> {
+    const [funnel] = await db.select().from(funnels).where(eq(funnels.id, id));
+    return funnel || undefined;
+  }
+
+  async createFunnel(funnel: InsertFunnel): Promise<Funnel> {
+    const [newFunnel] = await db.insert(funnels).values(funnel).returning();
+    
+    // Create an activity for this new funnel
+    await this.createActivity({
+      type: "note",
+      title: "New funnel created",
+      description: `${funnel.name} (${funnel.status})`,
+      createdBy: funnel.userId,
+    });
+    
+    return newFunnel;
+  }
+
+  async updateFunnel(id: number, funnelData: Partial<InsertFunnel>): Promise<Funnel | undefined> {
+    const [updatedFunnel] = await db
+      .update(funnels)
+      .set({ ...funnelData, updatedAt: new Date() })
+      .where(eq(funnels.id, id))
+      .returning();
+    
+    return updatedFunnel || undefined;
+  }
+
+  async updateFunnelStatus(id: number, status: string): Promise<Funnel | undefined> {
+    const [existingFunnel] = await db.select().from(funnels).where(eq(funnels.id, id));
+    if (!existingFunnel) {
+      return undefined;
+    }
+    
+    const previousStatus = existingFunnel.status;
+    
+    const [updatedFunnel] = await db
+      .update(funnels)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(funnels.id, id))
+      .returning();
+    
+    if (!updatedFunnel) {
+      return undefined;
+    }
+    
+    // Create an activity for status change
+    await this.createActivity({
+      type: "note",
+      title: "Funnel status updated",
+      description: `Changed from ${previousStatus} to ${status}`,
+      createdBy: existingFunnel.userId,
+    });
+    
+    return updatedFunnel;
+  }
+
+  async deleteFunnel(id: number): Promise<boolean> {
+    // First delete all funnel steps
+    await db.delete(funnelSteps).where(eq(funnelSteps.funnelId, id));
+    
+    // Then delete the funnel
+    const result = await db.delete(funnels).where(eq(funnels.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Funnel Step methods
+  async getFunnelSteps(funnelId: number): Promise<FunnelStep[]> {
+    return await db
+      .select()
+      .from(funnelSteps)
+      .where(eq(funnelSteps.funnelId, funnelId))
+      .orderBy(funnelSteps.order);
+  }
+
+  async getFunnelStep(id: number): Promise<FunnelStep | undefined> {
+    const [step] = await db.select().from(funnelSteps).where(eq(funnelSteps.id, id));
+    return step || undefined;
+  }
+
+  async createFunnelStep(step: InsertFunnelStep): Promise<FunnelStep> {
+    const [newStep] = await db.insert(funnelSteps).values(step).returning();
+    return newStep;
+  }
+
+  async updateFunnelStep(id: number, stepData: Partial<InsertFunnelStep>): Promise<FunnelStep | undefined> {
+    const [updatedStep] = await db
+      .update(funnelSteps)
+      .set({ ...stepData, updatedAt: new Date() })
+      .where(eq(funnelSteps.id, id))
+      .returning();
+    
+    return updatedStep || undefined;
+  }
+
+  async deleteFunnelStep(id: number): Promise<boolean> {
+    const result = await db.delete(funnelSteps).where(eq(funnelSteps.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async reorderFunnelSteps(funnelId: number, stepIds: number[]): Promise<FunnelStep[]> {
+    // Get the existing steps to verify they all exist
+    const steps = await this.getFunnelSteps(funnelId);
+    
+    if (steps.length !== stepIds.length) {
+      throw new Error("The number of steps provided doesn't match the number of steps in the funnel");
+    }
+    
+    // Update the order of each step
+    const updates = stepIds.map((stepId, index) => {
+      return db
+        .update(funnelSteps)
+        .set({ order: index + 1, updatedAt: new Date() })
+        .where(eq(funnelSteps.id, stepId));
+    });
+    
+    await Promise.all(updates);
+    
+    // Return the updated steps in order
+    return await this.getFunnelSteps(funnelId);
   }
 }
