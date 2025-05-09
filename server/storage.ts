@@ -71,6 +71,13 @@ export interface IStorage {
   updateFunnelStep(id: number, stepData: Partial<InsertFunnelStep>): Promise<FunnelStep | undefined>;
   deleteFunnelStep(id: number): Promise<boolean>;
   reorderFunnelSteps(funnelId: number, stepIds: number[]): Promise<FunnelStep[]>;
+  
+  // Calendar Events
+  getAllCalendarEvents(): Promise<CalendarEvent[]>;
+  getCalendarEvent(id: number): Promise<CalendarEvent | undefined>;
+  createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
+  updateCalendarEvent(id: number, eventData: Partial<InsertCalendarEvent>): Promise<CalendarEvent | undefined>;
+  deleteCalendarEvent(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {

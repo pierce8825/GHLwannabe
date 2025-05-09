@@ -290,3 +290,47 @@ export const funnelStepsRelations = relations(funnelSteps, ({ one }) => ({
     relationName: "funnel_steps",
   }),
 }));
+
+// Calendar events Schema
+export const calendarEvents = pgTable("calendar_events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  type: text("type").notNull().default("meeting"),
+  start: timestamp("start", { mode: 'date' }).notNull(),
+  end: timestamp("end", { mode: 'date' }).notNull(),
+  contactId: integer("contact_id").references(() => contacts.id),
+  dealId: integer("deal_id").references(() => deals.id),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export const insertCalendarEventSchema = createInsertSchema(calendarEvents).pick({
+  title: true,
+  description: true,
+  type: true,
+  start: true,
+  end: true,
+  contactId: true,
+  dealId: true,
+  userId: true,
+});
+
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;
+
+export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [calendarEvents.contactId],
+    references: [contacts.id]
+  }),
+  deal: one(deals, {
+    fields: [calendarEvents.dealId],
+    references: [deals.id]
+  }),
+  user: one(users, {
+    fields: [calendarEvents.userId],
+    references: [users.id]
+  })
+}));
