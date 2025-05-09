@@ -54,7 +54,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatsCard 
           title="Total Contacts" 
-          value={isLoading ? "..." : stats?.totalContacts}
+          value={isLoading ? "..." : (stats?.totalContacts !== undefined ? stats.totalContacts : 0)}
           change={{
             value: "8.2% from last month",
             type: "increase"
@@ -66,7 +66,7 @@ const Dashboard = () => {
         
         <StatsCard 
           title="Open Deals" 
-          value={isLoading ? "..." : stats?.openDeals}
+          value={isLoading ? "..." : (stats?.openDeals !== undefined ? stats.openDeals : 0)}
           change={{
             value: "3.1% from last month",
             type: "decrease"
@@ -78,7 +78,7 @@ const Dashboard = () => {
         
         <StatsCard 
           title="Active Campaigns" 
-          value={isLoading ? "..." : stats?.activeCampaigns}
+          value={isLoading ? "..." : (stats?.activeCampaigns !== undefined ? stats.activeCampaigns : 0)}
           change={{
             value: "2 new this week",
             type: "increase"
@@ -90,7 +90,7 @@ const Dashboard = () => {
         
         <StatsCard 
           title="Appointments" 
-          value={isLoading ? "..." : stats?.upcomingTasks}
+          value={isLoading ? "..." : (stats?.upcomingTasks !== undefined ? stats.upcomingTasks : 0)}
           change={{
             value: "3 upcoming today",
             type: "neutral"

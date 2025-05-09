@@ -8,7 +8,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ open, setOpen, isMobile }: SidebarProps) => {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
 
   const closeSidebarOnMobile = () => {
     if (isMobile) {
@@ -205,7 +205,7 @@ const Sidebar = ({ open, setOpen, isMobile }: SidebarProps) => {
                 onClick={() => {
                   if (confirm("Are you sure you want to log out?")) {
                     alert("You have been logged out.");
-                    window.location.href = "/";
+                    setLocation("/");
                   }
                 }}
               >
